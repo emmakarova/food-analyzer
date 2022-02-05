@@ -2,6 +2,7 @@ package bg.sofia.uni.fmi.mjt.food.analyzer.server;
 
 import bg.sofia.uni.fmi.mjt.food.analyzer.commands.CommandExecutor;
 import bg.sofia.uni.fmi.mjt.food.analyzer.commands.CommandFactory;
+import bg.sofia.uni.fmi.mjt.food.analyzer.storage.Storage;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -21,6 +22,9 @@ public class FoodAnalyzerServer {
 
     private static ByteBuffer buffer = ByteBuffer.allocate(BUFFER_SIZE);
     private static CommandExecutor cmdExecutor = new CommandExecutor();
+
+    private Storage storage;
+
 
     //add constructor
 
@@ -60,6 +64,11 @@ public class FoodAnalyzerServer {
                         clientInput = clientInput.replace(System.lineSeparator(),"");
 
                      String res = cmdExecutor.execute(CommandFactory.newCommand(clientInput));
+                     // res will be the final result from either:
+                        // -> storage
+                        // -> api request
+                        // -> help/unknown command
+
                         System.out.println(res);
 
                         writeClientOutput(sc,res);

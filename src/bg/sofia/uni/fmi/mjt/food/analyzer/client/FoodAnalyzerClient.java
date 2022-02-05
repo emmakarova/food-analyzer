@@ -24,14 +24,15 @@ public class FoodAnalyzerClient {
             System.out.println("Connected to the server.");
 
             while (true) {
-                System.out.print("Enter message: ");
+                System.out.print("> ");
                 String message = scanner.nextLine(); // read a line from the console
 
                 if ("quit".equals(message)) {
+                    System.out.println("Disconnecting from the server and exiting...");
                     break;
                 }
 
-                System.out.println("Sending message <" + message + "> to the server...");
+                System.out.println("Waiting for server to respond...");
 
                 buffer.clear(); // switch to writing mode
                 buffer.put(message.getBytes()); // buffer fill

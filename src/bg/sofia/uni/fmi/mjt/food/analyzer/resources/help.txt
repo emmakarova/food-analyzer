@@ -1,2 +1,11 @@
-get-food
-get-food-report
+Commands supported:
+    > get-food <food_name>
+        - returns information about the given food by food name.
+    > get-food-report <food_fdcId>
+        - returns the name of the product, its calories,protein, fats,carbohydrates and fibers.
+    > get-food-by-barcode --code=<gtinUpc_code>|--img=<barcode_image_file>
+        - returns information about the product searched by barcode or barcode image.
+    > help
+        - displays information about the supported commands.
+    > quit
+        - exits the application.
