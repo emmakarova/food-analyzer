@@ -2,6 +2,7 @@ package bg.sofia.uni.fmi.mjt.food.analyzer.commands;
 
 import bg.sofia.uni.fmi.mjt.food.analyzer.dto.food.FoodData;
 import bg.sofia.uni.fmi.mjt.food.analyzer.dto.food.FoodReport;
+import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.FoodDataCentralClientException;
 import bg.sofia.uni.fmi.mjt.food.analyzer.fdc.FoodDataCentralClient;
 import com.google.gson.Gson;
 
@@ -35,7 +36,12 @@ public class CommandExecutor {
 
         fdcClient = new FoodDataCentralClient(HttpClient.newHttpClient());
 
-        List<FoodData> foodInfo = fdcClient.getFoodInfo(s.toString());
+        List<FoodData> foodInfo = null;
+        try {
+            foodInfo = fdcClient.getFoodInfo(s.toString());
+        } catch (FoodDataCentralClientException e) {
+            return "Problem with the API occurred, check your connection and try again later.\n";
+        }
 
         StringBuilder result = new StringBuilder();
         for(FoodData f : foodInfo) {
@@ -53,7 +59,13 @@ public class CommandExecutor {
         String fdcId = arguments.get(0);
         fdcClient = new FoodDataCentralClient(HttpClient.newHttpClient());
 
-        FoodReport fr = fdcClient.getFoodReport(fdcId);
+        FoodReport fr = null;
+        try {
+            fr = fdcClient.getFoodReport(fdcId);
+        } catch (FoodDataCentralClientException e) {
+            return "Problem with the API occurred, check your connection and try again later.\n";
+        }
+
         return fr.toString();
 
     }
@@ -80,7 +92,7 @@ public class CommandExecutor {
             case GET_FOOD -> getFoodByName(command.arguments());
             case GET_FOOD_REPORT -> getFoodReport(command.arguments());
             case HELP -> getHelp();
-            default -> "nothing";
+            default -> "The command is not supported.";
         };
     }
 
