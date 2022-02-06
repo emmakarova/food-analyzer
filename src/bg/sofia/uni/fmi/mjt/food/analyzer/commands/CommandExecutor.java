@@ -4,6 +4,8 @@ import bg.sofia.uni.fmi.mjt.food.analyzer.dto.food.FoodData;
 import bg.sofia.uni.fmi.mjt.food.analyzer.dto.food.FoodReport;
 import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.FoodDataCentralClientException;
 import bg.sofia.uni.fmi.mjt.food.analyzer.fdc.FoodDataCentralClient;
+import bg.sofia.uni.fmi.mjt.food.analyzer.storage.FoodDataStorage;
+import bg.sofia.uni.fmi.mjt.food.analyzer.storage.Storage;
 import com.google.gson.Gson;
 
 import java.io.BufferedReader;
@@ -21,6 +23,11 @@ public class CommandExecutor {
     private static final String HELP_FILE_PATH = "src/bg/sofia/uni/fmi/mjt/food/analyzer/resources/help.txt";
 
     private FoodDataCentralClient fdcClient;
+    private Storage foodDataStorage;
+
+    public CommandExecutor() {
+        foodDataStorage = new FoodDataStorage();
+    }
 
     private String getFoodByName(List<String> foodName) {
         StringBuilder s = new StringBuilder();
@@ -55,6 +62,9 @@ public class CommandExecutor {
         if(arguments.size() > 1) {
             System.out.println("Exception");
         }
+        System.out.println("TESTING STORAGE");
+        foodDataStorage.load();
+
 
         String fdcId = arguments.get(0);
         fdcClient = new FoodDataCentralClient(HttpClient.newHttpClient());
