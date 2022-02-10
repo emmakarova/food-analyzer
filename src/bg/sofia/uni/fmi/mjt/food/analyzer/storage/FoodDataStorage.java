@@ -1,6 +1,8 @@
 package bg.sofia.uni.fmi.mjt.food.analyzer.storage;
 
 import bg.sofia.uni.fmi.mjt.food.analyzer.dto.food.FoodReport;
+import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.FoodDataStorageException;
+import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.FoodNotFoundException;
 
 import java.io.File;
 import java.io.IOException;
@@ -103,5 +105,17 @@ public class FoodDataStorage implements Storage {
         }
 
         return null;
+    }
+
+    @Override
+    public FoodReport getFoodReportByBarcode(String gtinUpc) throws FoodDataStorageException {
+        for(int fdcId : foodReportsInStorage.keySet()) {
+            if(foodReportsInStorage.get(fdcId).getGtinUpc().equals(gtinUpc)) {
+                System.out.println("YESS");
+                return getFoodReport(fdcId);
+            }
+        }
+
+        throw new FoodDataStorageException("No such food exists with gtinUpc = " + gtinUpc);
     }
 }

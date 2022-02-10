@@ -8,23 +8,26 @@ import java.util.Locale;
 
 public class FoodReport {
     private int fdcId;
+    private String gtinUpc;
     @SerializedName("description")
     private String name;
     private String ingredients;
     private LabelNutrients labelNutrients;
 //fdcId;name;ingredients;fat;carbohydrates;fiber;protein;calories;
     private static final int FDCID = 1;
-    private static final int NAME = 2;
-    private static final int INGREDIENTS = 3;
-    private static final int FAT = 4;
-    private static final int CARBOHYDRATES = 5;
-    private static final int FIBER = 6;
-    private static final int PROTEIN = 7;
-    private static final int CALORIES = 8;
+    private static final int GTINUPC = 2;
+    private static final int NAME = 3;
+    private static final int INGREDIENTS = 4;
+    private static final int FAT = 5;
+    private static final int CARBOHYDRATES = 6;
+    private static final int FIBER = 7;
+    private static final int PROTEIN = 8;
+    private static final int CALORIES = 9;
 
 
-    public FoodReport(int fdcId,String name, String ingredients, LabelNutrients labelNutrients) {
+    public FoodReport(int fdcId,String gtinUpc,String name, String ingredients, LabelNutrients labelNutrients) {
         this.fdcId = fdcId;
+        this.gtinUpc = gtinUpc;
         this.name = name;
         this.ingredients = ingredients;
         this.labelNutrients = labelNutrients;
@@ -34,10 +37,15 @@ public class FoodReport {
         return fdcId;
     }
 
+    public String getGtinUpc() {
+        return gtinUpc;
+    }
+
     public static FoodReport of(String line) {
         String[] tokens = line.split(";");
 
         int fdcId = Integer.parseInt(tokens[FDCID]);
+        String gtinUpc = tokens[GTINUPC];
         String name = tokens[NAME];
         String ingredients = tokens[INGREDIENTS];
 
@@ -49,17 +57,17 @@ public class FoodReport {
 
         LabelNutrients labelNutrients = new LabelNutrients(fat,carbohydrates,fiber,protein,calories);
 
-        return new FoodReport(fdcId,name,ingredients,labelNutrients);
+        return new FoodReport(fdcId,gtinUpc,name,ingredients,labelNutrients);
     }
 
     @Override
     public String toString() {
-        return String.format("Food report:\n\tFdcId: %d\n\tName: %s\n\tIngredients: %s\n\tNutrients:\n%s",fdcId,name,ingredients,labelNutrients);
+        return String.format("Food report:\n\tFdcId: %d\n\tGtinUpc: %s\n\tName: %s\n\tIngredients: %s\n\tNutrients:\n%s",fdcId,gtinUpc,name,ingredients,labelNutrients);
     }
 
     public String toCSV() {
-        return String.format(Locale.US,"%d;%s;%s;%.1f;%.1f;%.1f;%.1f;%.1f;\n",
-                fdcId,name,ingredients,labelNutrients.getFat().getValue(),labelNutrients.getCarbohydrates().getValue(),
+        return String.format(Locale.US,"%d;%s;%s;%s;%.1f;%.1f;%.1f;%.1f;%.1f;\n",
+                fdcId,getGtinUpc(),name,ingredients,labelNutrients.getFat().getValue(),labelNutrients.getCarbohydrates().getValue(),
                 labelNutrients.getFiber().getValue(),labelNutrients.getProtein().getValue(),
                 labelNutrients.getCalories().getValue());
     }

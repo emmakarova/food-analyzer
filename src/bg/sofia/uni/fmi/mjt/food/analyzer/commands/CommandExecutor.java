@@ -3,6 +3,7 @@ package bg.sofia.uni.fmi.mjt.food.analyzer.commands;
 import bg.sofia.uni.fmi.mjt.food.analyzer.dto.food.FoodData;
 import bg.sofia.uni.fmi.mjt.food.analyzer.dto.food.FoodReport;
 import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.FoodDataCentralClientException;
+import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.FoodDataStorageException;
 import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.InvalidArgumentsException;
 import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.InvalidNumberOfArgumentsException;
 import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.NotMatchingArgumentsFormatException;
@@ -85,6 +86,7 @@ public class CommandExecutor {
             fr = fdcClient.getFoodReport(fdcId);
         } catch (FoodDataCentralClientException e) {
 //            return "Problem with the API occurred, check your connection and try again later.\n";
+            // throw exception
             return e.getMessage();
         }
 
@@ -110,10 +112,23 @@ public class CommandExecutor {
 
     }
 //get-food-by-barcode --code=<gtinUpc_code>|--img=<barcode_image_file>
-    private String getFoodByBarcode(List<String> arguments) throws InvalidArgumentsException {
+    private String getFoodByBarcode(List<String> arguments) throws InvalidArgumentsException, FoodDataStorageException {
         validateBarcodeArguments(arguments);
 
+        for(String a : arguments) {
+            if(a.startsWith("--code")) {
+                String gtinUpc = a.substring(7);
+                System.out.println("code = " + gtinUpc);
+                return foodDataStorage.getFoodReportByBarcode(gtinUpc).toString();
+            }
+        }
 
+        // img case
+
+
+        // if code => getInfo
+        // if img => generate code from img => getInfo
+        // if both => take code => getInfo
         return "barcode";
     }
 
@@ -134,7 +149,7 @@ public class CommandExecutor {
         return helpInfo.toString();
     }
 
-    public String execute(Command command) throws InvalidArgumentsException {
+    public String execute(Command command) throws InvalidArgumentsException, FoodDataStorageException {
         return switch (command.cmd()) {
             case GET_FOOD -> getFoodByName(command.arguments());
             case GET_FOOD_REPORT -> getFoodReport(command.arguments());

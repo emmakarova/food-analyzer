@@ -2,6 +2,7 @@ package bg.sofia.uni.fmi.mjt.food.analyzer.server;
 
 import bg.sofia.uni.fmi.mjt.food.analyzer.commands.CommandExecutor;
 import bg.sofia.uni.fmi.mjt.food.analyzer.commands.CommandFactory;
+import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.FoodDataStorageException;
 import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.InvalidArgumentsException;
 import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.InvalidNumberOfArgumentsException;
 import bg.sofia.uni.fmi.mjt.food.analyzer.storage.Storage;
@@ -68,7 +69,7 @@ public class FoodAnalyzerServer {
                         String res = null;
                         try {
                             res = cmdExecutor.execute(CommandFactory.newCommand(clientInput));
-                        } catch (InvalidArgumentsException e) {
+                        } catch (InvalidArgumentsException | FoodDataStorageException e) {
                             writeClientOutput(sc,e.getMessage());
                         }
                         // res will be the final result from either:
