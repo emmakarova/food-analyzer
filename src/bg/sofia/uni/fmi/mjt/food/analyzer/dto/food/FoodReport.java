@@ -4,6 +4,8 @@ import bg.sofia.uni.fmi.mjt.food.analyzer.dto.food.nutrients.LabelNutrients;
 import bg.sofia.uni.fmi.mjt.food.analyzer.dto.food.nutrients.Nutrient;
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Locale;
+
 public class FoodReport {
     private int fdcId;
     @SerializedName("description")
@@ -28,6 +30,10 @@ public class FoodReport {
         this.labelNutrients = labelNutrients;
     }
 
+    public int getFdcId() {
+        return fdcId;
+    }
+
     public static FoodReport of(String line) {
         String[] tokens = line.split(";");
 
@@ -49,5 +55,12 @@ public class FoodReport {
     @Override
     public String toString() {
         return String.format("Food report:\n\tFdcId: %d\n\tName: %s\n\tIngredients: %s\n\tNutrients:\n%s",fdcId,name,ingredients,labelNutrients);
+    }
+
+    public String toCSV() {
+        return String.format(Locale.US,"%d;%s;%s;%.1f;%.1f;%.1f;%.1f;%.1f;\n",
+                fdcId,name,ingredients,labelNutrients.getFat().getValue(),labelNutrients.getCarbohydrates().getValue(),
+                labelNutrients.getFiber().getValue(),labelNutrients.getProtein().getValue(),
+                labelNutrients.getCalories().getValue());
     }
 }

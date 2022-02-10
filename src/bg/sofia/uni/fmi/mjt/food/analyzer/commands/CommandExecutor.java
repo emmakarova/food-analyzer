@@ -3,12 +3,13 @@ package bg.sofia.uni.fmi.mjt.food.analyzer.commands;
 import bg.sofia.uni.fmi.mjt.food.analyzer.dto.food.FoodData;
 import bg.sofia.uni.fmi.mjt.food.analyzer.dto.food.FoodReport;
 import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.FoodDataCentralClientException;
+import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.InvalidArgumentsException;
+import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.InvalidNumberOfArgumentsException;
+import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.NotMatchingArgumentsFormatException;
 import bg.sofia.uni.fmi.mjt.food.analyzer.fdc.FoodDataCentralClient;
 import bg.sofia.uni.fmi.mjt.food.analyzer.storage.FoodDataStorage;
 import bg.sofia.uni.fmi.mjt.food.analyzer.storage.Storage;
-import com.google.gson.Gson;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.http.HttpClient;
 import java.nio.file.Files;
@@ -18,9 +19,14 @@ import java.util.List;
 public class CommandExecutor {
     private static final String GET_FOOD = "get-food";
     private static final String GET_FOOD_REPORT = "get-food-report";
+    private static final String GET_FOOD_BY_BARCODE = "get-food-by-barcode";
     private static final String HELP = "help";
 
     private static final String HELP_FILE_PATH = "src/bg/sofia/uni/fmi/mjt/food/analyzer/resources/help.txt";
+    private static final String UNKNOWN_COMMAND = "The command is not supported.";
+    private static final String CODE_ARGUMENT_REGEX = "--code=[0-9]+";
+    private static final String IMAGE_ARGUMENT_REGEX = "--img=";
+
 
     private FoodDataCentralClient fdcClient;
     private Storage foodDataStorage;
@@ -37,7 +43,6 @@ public class CommandExecutor {
         }
 
         int stringBuilderSize = s.length();
-//        s.delete(stringBuilderSize-3,stringBuilderSize);
         s.deleteCharAt(stringBuilderSize-1);
         System.out.println(s.toString());
 
@@ -47,7 +52,8 @@ public class CommandExecutor {
         try {
             foodInfo = fdcClient.getFoodInfo(s.toString());
         } catch (FoodDataCentralClientException e) {
-            return "Problem with the API occurred, check your connection and try again later.\n";
+            return e.getMessage();
+//            return "Problem with the API occurred, check your connection and try again later.\n";
         }
 
         StringBuilder result = new StringBuilder();
@@ -58,26 +64,57 @@ public class CommandExecutor {
         return result.toString();
     }
 
-    private String getFoodReport(List<String> arguments) {
-        if(arguments.size() > 1) {
-            System.out.println("Exception");
+    private String getFoodReport(List<String> arguments) throws InvalidNumberOfArgumentsException {
+        int numberOfArguments = arguments.size();
+        if(numberOfArguments > 1) {
+            throw new InvalidNumberOfArgumentsException("Wrong number of arguments: expected 1 but given " + numberOfArguments);
         }
         System.out.println("TESTING STORAGE");
+        FoodReport fr = null;
         foodDataStorage.load();
+        int fdcId = Integer.parseInt(arguments.get(0));
+        if((fr = foodDataStorage.getFoodReport(fdcId)) != null) {
+            System.out.println("IN STORAGE");
+            return fr.toString();
+        }
 
 
-        String fdcId = arguments.get(0);
         fdcClient = new FoodDataCentralClient(HttpClient.newHttpClient());
 
-        FoodReport fr = null;
         try {
             fr = fdcClient.getFoodReport(fdcId);
         } catch (FoodDataCentralClientException e) {
-            return "Problem with the API occurred, check your connection and try again later.\n";
+//            return "Problem with the API occurred, check your connection and try again later.\n";
+            return e.getMessage();
         }
+
+        foodDataStorage.add(fr);
 
         return fr.toString();
 
+    }
+
+    private void validateBarcodeArguments(List<String> arguments) throws NotMatchingArgumentsFormatException {
+        if(arguments.size() == 0) {
+            throw new NotMatchingArgumentsFormatException("Expected at least one argument, type 'help' for more information.");
+        }
+
+        int startIndex = 0;
+        int endIndex = 6;
+
+        for(String s : arguments) {
+            if(s.length() < endIndex || !(s.matches(CODE_ARGUMENT_REGEX) || s.substring(startIndex,endIndex).matches(IMAGE_ARGUMENT_REGEX))) {
+                throw new NotMatchingArgumentsFormatException("Command arguments did not match the expected format, type 'help' for more information.");
+            }
+        }
+
+    }
+//get-food-by-barcode --code=<gtinUpc_code>|--img=<barcode_image_file>
+    private String getFoodByBarcode(List<String> arguments) throws InvalidArgumentsException {
+        validateBarcodeArguments(arguments);
+
+
+        return "barcode";
     }
 
     private String getHelp() {
@@ -97,12 +134,13 @@ public class CommandExecutor {
         return helpInfo.toString();
     }
 
-    public String execute(Command command) {
+    public String execute(Command command) throws InvalidArgumentsException {
         return switch (command.cmd()) {
             case GET_FOOD -> getFoodByName(command.arguments());
             case GET_FOOD_REPORT -> getFoodReport(command.arguments());
+            case GET_FOOD_BY_BARCODE -> getFoodByBarcode(command.arguments());
             case HELP -> getHelp();
-            default -> "The command is not supported.";
+            default -> UNKNOWN_COMMAND;
         };
     }
 

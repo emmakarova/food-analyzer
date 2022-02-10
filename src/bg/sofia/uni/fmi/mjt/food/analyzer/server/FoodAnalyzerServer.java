@@ -2,6 +2,8 @@ package bg.sofia.uni.fmi.mjt.food.analyzer.server;
 
 import bg.sofia.uni.fmi.mjt.food.analyzer.commands.CommandExecutor;
 import bg.sofia.uni.fmi.mjt.food.analyzer.commands.CommandFactory;
+import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.InvalidArgumentsException;
+import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.InvalidNumberOfArgumentsException;
 import bg.sofia.uni.fmi.mjt.food.analyzer.storage.Storage;
 
 import java.io.IOException;
@@ -28,7 +30,7 @@ public class FoodAnalyzerServer {
 
     //add constructor
 
-    public static void main(String[] args) {
+    public void start() {
         try (ServerSocketChannel serverSocketChannel = ServerSocketChannel.open()) {
             serverSocketChannel.bind(new InetSocketAddress(SERVER_HOST, SERVER_PORT));
             serverSocketChannel.configureBlocking(false);
@@ -63,15 +65,21 @@ public class FoodAnalyzerServer {
 
                         clientInput = clientInput.replace(System.lineSeparator(),"");
 
-                     String res = cmdExecutor.execute(CommandFactory.newCommand(clientInput));
-                     // res will be the final result from either:
+                        String res = null;
+                        try {
+                            res = cmdExecutor.execute(CommandFactory.newCommand(clientInput));
+                        } catch (InvalidArgumentsException e) {
+                            writeClientOutput(sc,e.getMessage());
+                        }
+                        // res will be the final result from either:
                         // -> storage
-                        // -> api request
+                        // -> api requestx
                         // -> help/unknown command
 
                         System.out.println(res);
-
-                        writeClientOutput(sc,res);
+                        if(res != null) {
+                            writeClientOutput(sc,res);
+                        }
                         // mock for now
 //                        writeClientOutput(sc, clientInput);
 
@@ -93,6 +101,13 @@ public class FoodAnalyzerServer {
             throw new RuntimeException("There is a problem with the server socket", e);
         }
     }
+
+    public static void main(String[] args) {
+        FoodAnalyzerServer s = new FoodAnalyzerServer();
+        s.start();
+    }
+
+    // stop method
 
 
     private static String getClientInput(SocketChannel clientChannel) throws IOException {

@@ -5,9 +5,13 @@ import java.util.List;
 
 public class CommandFactory {
     private static List<String> splitClientInput(String clientInput) {
+        clientInput = clientInput.strip();
+
         String[] arguments = clientInput.split(" ");
 
-        // maybe ignore some words
+        for(String s : arguments) {
+            System.out.print(s + "*");
+        }
 
         return new ArrayList<>(List.of(arguments));
 

@@ -3,7 +3,9 @@ package bg.sofia.uni.fmi.mjt.food.analyzer.fdc;
 import bg.sofia.uni.fmi.mjt.food.analyzer.dto.ApiResponseMetadata;
 import bg.sofia.uni.fmi.mjt.food.analyzer.dto.food.FoodData;
 import bg.sofia.uni.fmi.mjt.food.analyzer.dto.food.FoodReport;
+import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.BadRequestException;
 import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.FoodDataCentralClientException;
+import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.FoodNotFoundException;
 import com.google.gson.Gson;
 
 import java.io.IOException;
@@ -53,33 +55,52 @@ public class FoodDataCentralClient {
             System.out.println("HERE2");
         }
         catch (IOException | URISyntaxException | InterruptedException e) {
-            throw new FoodDataCentralClientException();
+            throw new FoodDataCentralClientException("An error when sending the request occurred");
         }
+        int responseStatusCode = response.statusCode();
 
-        if(response.statusCode() == HttpURLConnection.HTTP_OK) {
+        if(responseStatusCode == HttpURLConnection.HTTP_OK) {
 //            System.out.println(response.body());
             ApiResponseMetadata r = GSON.fromJson(response.body(),ApiResponseMetadata.class);
             return r.getFoods();
         }
+        else {
+            checkResponseStatusCode(responseStatusCode);
+        }
+
 
         return new ArrayList<>();
     }
 
-    public FoodReport getFoodReport(String fdcId) throws FoodDataCentralClientException {
+    private void checkResponseStatusCode(int statusCode) throws FoodDataCentralClientException {
+        switch (statusCode) {
+            case HttpURLConnection.HTTP_NOT_FOUND -> throw new FoodNotFoundException("Food with this fdcId was not found.");
+            case HttpURLConnection.HTTP_BAD_REQUEST -> throw new BadRequestException("Missing or misconfigured parameter in request.");
+            default -> throw new FoodDataCentralClientException("An unexpected error occurred when calling the api, status code " + statusCode);
+        }
+    }
+
+    public FoodReport getFoodReport(int fdcId) throws FoodDataCentralClientException {
         HttpResponse<String> response = null;
 
         try {
             URI uri = new URI(API_SCHEME,API_HOST,PATH_TO_RESOURCE_GET_FOOD_REPORT +"/"+ fdcId,"api_key=" + apiKey,null);
-            System.out.println(uri.toString());
+            System.out.println(uri);
             HttpRequest request = HttpRequest.newBuilder().uri(uri).build();
             System.out.println("HERE");
             response = foodDataCentralClient.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (URISyntaxException | IOException | InterruptedException e) {
-            throw new FoodDataCentralClientException();
+            // connection error
+            throw new FoodDataCentralClientException("An error when sending the request occurred");
         }
 
-        if(response.statusCode() == HttpURLConnection.HTTP_OK) {
+        int responseStatusCode = response.statusCode();
+
+        if(responseStatusCode == HttpURLConnection.HTTP_OK) {
             return GSON.fromJson(response.body(),FoodReport.class);
+        }
+        else {
+            checkResponseStatusCode(responseStatusCode);
         }
 
         return null;

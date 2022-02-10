@@ -50,7 +50,7 @@ public class FoodAnalyzerClient {
                 // if buffer is a non-direct one, is has a wrapped array and we can get it
                 //String reply = new String(buffer.array(), 0, buffer.position(), "UTF-8"); // buffer drain
 
-                System.out.println("The server replied \n" + reply);
+                System.out.println(reply);
             }
 
         } catch (IOException e) {
