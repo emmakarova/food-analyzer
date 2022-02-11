@@ -14,7 +14,7 @@ public class FoodAnalyzerClient {
 
     private static ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
 
-    public static void main(String[] args) {
+    public void start() {
 
         try (SocketChannel socketChannel = SocketChannel.open();
              Scanner scanner = new Scanner(System.in)) {
@@ -27,7 +27,7 @@ public class FoodAnalyzerClient {
                 System.out.print("> ");
                 String message = scanner.nextLine(); // read a line from the console
 
-                if ("quit".equals(message)) {
+                if (message.equals("quit")) {
                     System.out.println("Disconnecting from the server and exiting...");
                     break;
                 }
@@ -54,7 +54,12 @@ public class FoodAnalyzerClient {
             }
 
         } catch (IOException e) {
-            throw new RuntimeException("There is a problem with the network communication", e);
+            System.out.println("Sorry, can't connect to the server, try again later.");
         }
+    }
+
+    public static void main(String[] args) {
+        FoodAnalyzerClient c = new FoodAnalyzerClient();
+        c.start();
     }
 }
