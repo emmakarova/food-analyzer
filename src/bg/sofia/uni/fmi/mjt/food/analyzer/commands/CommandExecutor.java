@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.net.http.HttpClient;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CommandExecutor {
@@ -40,23 +41,61 @@ public class CommandExecutor {
         foodAnalyzerLogger = new FoodAnalyzerLogger();
     }
 
-    private String getFoodByName(List<String> foodName) throws FoodDataCentralClientException {
-        StringBuilder s = new StringBuilder();
-        s.append("query=");
-        for(String str : foodName) {
-            s.append(str).append(" ");
+    private void validateNumberOfArguments(List<String> arguments) throws InvalidNumberOfArgumentsException {
+        int numberOfArguments = arguments.size();
+        if(numberOfArguments == 0) {
+            throw new InvalidNumberOfArgumentsException("Expected at least one argument, type 'help' for more information.");
+        }
+    }
+
+    private void validateBarcodeArguments(List<String> arguments) throws InvalidArgumentsException {
+        validateNumberOfArguments(arguments);
+
+        int startIndex = 0;
+        int endIndex = 6;
+
+        for(String s : arguments) {
+            if(s.length() < endIndex || !(s.matches(CODE_ARGUMENT_REGEX) || s.substring(startIndex,endIndex).matches(IMAGE_ARGUMENT_REGEX))) {
+                throw new NotMatchingArgumentsFormatException("Command arguments did not match the expected format, type 'help' for more information.");
+            }
         }
 
-        int stringBuilderSize = s.length();
-        s.deleteCharAt(stringBuilderSize-1);
-        System.out.println(s.toString());
+    }
+
+    private String getFoodByName(List<String> arguments) throws FoodDataCentralClientException, InvalidNumberOfArgumentsException {
+        validateNumberOfArguments(arguments);
+
+        int defaultPageNumber;
+        List<String> foodName = new ArrayList<>(arguments);
+
+        try {
+            defaultPageNumber = Integer.parseInt(arguments.get(0));
+            foodName.remove(0);
+        }
+        catch (NumberFormatException e) {
+            defaultPageNumber = 1;
+        }
+        System.out.println(foodName);
+        System.out.println(defaultPageNumber + "********");
+        StringBuilder queryParameters = new StringBuilder();
+        queryParameters.append("query=");
+        for(String str : foodName) {
+            queryParameters.append(str).append(" ");
+        }
+
+        int stringBuilderSize = queryParameters.length();
+        queryParameters.deleteCharAt(stringBuilderSize-1);
+        System.out.println(queryParameters.toString());
 
         fdcClient = new FoodDataCentralClient(HttpClient.newHttpClient());
 
         List<FoodData> foodInfo = null;
 
-        foodInfo = fdcClient.getFoodInfo(s.toString());
+        foodInfo = fdcClient.getFoodInfo(defaultPageNumber,queryParameters.toString());
 
+        if(foodInfo.isEmpty()) {
+            return "No results";
+        }
 
         StringBuilder result = new StringBuilder();
         int foodCounter = 1;
@@ -72,12 +111,11 @@ public class CommandExecutor {
         if(numberOfArguments > 1) {
             throw new InvalidNumberOfArgumentsException("Wrong number of arguments: expected 1 but given " + numberOfArguments);
         }
-        System.out.println("TESTING STORAGE");
+
         FoodReport fr = null;
         foodDataStorage.load();
         int fdcId = Integer.parseInt(arguments.get(0));
         if((fr = foodDataStorage.getFoodReport(fdcId)) != null) {
-            System.out.println("IN STORAGE");
             return fr.toString();
         }
 
@@ -94,21 +132,6 @@ public class CommandExecutor {
 
     }
 
-    private void validateBarcodeArguments(List<String> arguments) throws InvalidArgumentsException {
-        if(arguments.size() == 0) {
-            throw new InvalidNumberOfArgumentsException("Expected at least one argument, type 'help' for more information.");
-        }
-
-        int startIndex = 0;
-        int endIndex = 6;
-
-        for(String s : arguments) {
-            if(s.length() < endIndex || !(s.matches(CODE_ARGUMENT_REGEX) || s.substring(startIndex,endIndex).matches(IMAGE_ARGUMENT_REGEX))) {
-                throw new NotMatchingArgumentsFormatException("Command arguments did not match the expected format, type 'help' for more information.");
-            }
-        }
-
-    }
 //get-food-by-barcode --code=<gtinUpc_code>|--img=<barcode_image_file>
     private String getFoodByBarcode(List<String> arguments) throws InvalidArgumentsException, FoodDataStorageException {
         validateBarcodeArguments(arguments);

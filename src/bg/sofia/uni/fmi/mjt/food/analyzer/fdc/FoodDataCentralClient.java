@@ -36,7 +36,7 @@ public class FoodDataCentralClient {
 
     public FoodDataCentralClient(HttpClient foodDataCentralClient) {
         this(foodDataCentralClient,DEFAULT_API_KEY);
-        this.currentPage = 0;
+        this.currentPage = 1;
     }
 
     public FoodDataCentralClient(HttpClient foodDataCentralClient, String apiKey) {
@@ -44,13 +44,15 @@ public class FoodDataCentralClient {
         this.apiKey = apiKey;
     }
 
-    public List<FoodData> getFoodInfo(String queryParameters) throws FoodDataCentralClientException {
+    public List<FoodData> getFoodInfo(int defaultPageNumber,String queryParameters) throws FoodDataCentralClientException {
         HttpResponse<String> response = null;
 
         List<FoodData> result = new ArrayList<>();
 
         try {
-            URI uri = new URI(API_SCHEME,API_HOST,PATH_TO_RESOURCE_GET_FOOD,String.format(API_PARAMETERS,queryParameters,apiKey,DEFAULT_PAGE_SIZE,currentPage),null);
+            URI uri = new URI(API_SCHEME,API_HOST,PATH_TO_RESOURCE_GET_FOOD,String.format(API_PARAMETERS,queryParameters,apiKey,DEFAULT_PAGE_SIZE,defaultPageNumber),null);
+            System.out.println(uri);
+
             HttpRequest request = HttpRequest.newBuilder().uri(uri).build();
             response = foodDataCentralClient.send(request, HttpResponse.BodyHandlers.ofString());
         }
