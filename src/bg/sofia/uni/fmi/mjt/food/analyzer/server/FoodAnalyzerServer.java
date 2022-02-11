@@ -7,6 +7,7 @@ import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.FoodDataStorageException;
 import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.InvalidArgumentsException;
 import bg.sofia.uni.fmi.mjt.food.analyzer.logger.FoodAnalyzerLogger;
 import bg.sofia.uni.fmi.mjt.food.analyzer.logger.Logger;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
@@ -25,21 +26,25 @@ public class FoodAnalyzerServer {
     private static final int SERVER_PORT = 7777;
     private static final String SERVER_HOST = "localhost";
     private static final int BUFFER_SIZE = 1024;
+    private static final String LOG_DIRECTORY = "src/bg/sofia/uni/fmi/mjt/food/analyzer/logs";
 
     private static ByteBuffer buffer = ByteBuffer.allocate(BUFFER_SIZE);
-    private static CommandExecutor cmdExecutor = new CommandExecutor();
+    private CommandExecutor cmdExecutor;
     private Selector selector;
 
-    private Logger foodAnalyzerLogger = new FoodAnalyzerLogger();
+    private Logger foodAnalyzerLogger;
     private boolean serverIsWorking;
+
+    public FoodAnalyzerServer() {
+        this.cmdExecutor = new CommandExecutor();
+        this.foodAnalyzerLogger = new FoodAnalyzerLogger(LOG_DIRECTORY);
+    }
 
     public void start() {
         try (ServerSocketChannel serverSocketChannel = ServerSocketChannel.open()) {
-            serverSocketChannel.bind(new InetSocketAddress(SERVER_HOST, SERVER_PORT));
-            serverSocketChannel.configureBlocking(false);
-
             selector = Selector.open();
-            serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+            serverSocketChannelConfiguration(serverSocketChannel, selector);
+
             serverIsWorking = true;
 
             while (serverIsWorking) {
@@ -59,38 +64,20 @@ public class FoodAnalyzerServer {
                             SocketChannel sc = (SocketChannel) key.channel();
 
                             String clientInput = getClientInput(sc);
-                            System.out.println("*" + clientInput + "*");
 
                             if (clientInput == null) {
                                 continue;
                             }
 
                             clientInput = clientInput.replace(System.lineSeparator(), "");
-
-                            String res = null;
-                            try {
-                                res = cmdExecutor.execute(CommandFactory.newCommand(clientInput));
-                            } catch (InvalidArgumentsException | FoodDataStorageException | FoodDataCentralClientException e) {
-                                foodAnalyzerLogger.log(LocalDateTime.now(), e.getMessage(), Arrays.toString(e.getStackTrace()));
-                                writeClientOutput(sc, e.getMessage());
-                            }
-
-                            if (res != null) {
-                                writeClientOutput(sc, res);
-                            }
-
+                            executeCommand(clientInput, sc);
                         } else if (key.isAcceptable()) {
-                            ServerSocketChannel sockChannel = (ServerSocketChannel) key.channel();
-                            SocketChannel accept = sockChannel.accept();
-                            accept.configureBlocking(false);
-                            accept.register(selector, SelectionKey.OP_READ);
-
+                            accept(selector, key);
                         }
 
                         keyIterator.remove();
                     }
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     System.out.println("Error when processing the client request: " + e.getMessage());
                 }
             }
@@ -102,6 +89,34 @@ public class FoodAnalyzerServer {
     public static void main(String[] args) {
         FoodAnalyzerServer s = new FoodAnalyzerServer();
         s.start();
+    }
+
+    private void accept(Selector selector, SelectionKey key) throws IOException {
+        ServerSocketChannel sockChannel = (ServerSocketChannel) key.channel();
+        SocketChannel accept = sockChannel.accept();
+        accept.configureBlocking(false);
+        accept.register(selector, SelectionKey.OP_READ);
+    }
+
+    private void serverSocketChannelConfiguration(ServerSocketChannel serverSocketChannel, Selector selector)
+            throws IOException {
+        serverSocketChannel.bind(new InetSocketAddress(SERVER_HOST, SERVER_PORT));
+        serverSocketChannel.configureBlocking(false);
+        serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+    }
+
+    private void executeCommand(String clientInput, SocketChannel sc) throws IOException {
+        String res = null;
+        try {
+            res = cmdExecutor.execute(CommandFactory.newCommand(clientInput));
+        } catch (InvalidArgumentsException | FoodDataStorageException | FoodDataCentralClientException e) {
+            foodAnalyzerLogger.log(LocalDateTime.now(), e.getMessage(), Arrays.toString(e.getStackTrace()));
+            writeClientOutput(sc, e.getMessage());
+        }
+
+        if (res != null) {
+            writeClientOutput(sc, res);
+        }
     }
 
     private static String getClientInput(SocketChannel clientChannel) throws IOException {
@@ -118,7 +133,7 @@ public class FoodAnalyzerServer {
         byte[] clientInputBytes = new byte[buffer.remaining()];
         buffer.get(clientInputBytes);
 
-        return new String(clientInputBytes,StandardCharsets.UTF_8);
+        return new String(clientInputBytes, StandardCharsets.UTF_8);
     }
 
     private static void writeClientOutput(SocketChannel clientChannel,

@@ -5,6 +5,7 @@ import bg.sofia.uni.fmi.mjt.food.analyzer.dto.food.nutrients.Nutrient;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.Locale;
+import java.util.Objects;
 
 public class FoodReport {
     private int fdcId;
@@ -25,7 +26,7 @@ public class FoodReport {
     private static final int CALORIES = 9;
 
 
-    public FoodReport(int fdcId,String gtinUpc,String name, String ingredients, LabelNutrients labelNutrients) {
+    public FoodReport(int fdcId, String gtinUpc, String name, String ingredients, LabelNutrients labelNutrients) {
         this.fdcId = fdcId;
         this.gtinUpc = gtinUpc;
         this.name = name;
@@ -63,24 +64,36 @@ public class FoodReport {
         Nutrient protein = new Nutrient(Double.parseDouble(tokens[PROTEIN]));
         Nutrient calories = new Nutrient(Double.parseDouble(tokens[CALORIES]));
 
-        LabelNutrients labelNutrients = new LabelNutrients(fat,carbohydrates,fiber,protein,calories);
+        LabelNutrients labelNutrients = new LabelNutrients(fat, carbohydrates, fiber, protein, calories);
 
-        return new FoodReport(fdcId,gtinUpc,name,ingredients,labelNutrients);
+        return new FoodReport(fdcId, gtinUpc, name, ingredients, labelNutrients);
     }
 
     @Override
     public String toString() {
-        return String.format("Food report:\n\tFdcId: %d\n\tGtinUpc: %s\n\tName: %s\n\tIngredients: %s\n\tNutrients:\n%s",fdcId,getGtinUpc(),name,getIngredients(),getLabelNutrients());
+        return String.format("Food report:\n\tFdcId: %d\n\tGtinUpc: %s\n\tName: %s\n\tIngredients: %s\n\tNutrients:\n%s", fdcId, getGtinUpc(), name, getIngredients(), getLabelNutrients());
     }
 
     public String toCSV() {
-        System.out.println(toString());
         LabelNutrients currentLabelNutrients = getLabelNutrients();
 
-        return String.format(Locale.US,"%d;%s;%s;%s;%.1f;%.1f;%.1f;%.1f;%.1f;\n",
-                fdcId,getGtinUpc(),name,getIngredients(),currentLabelNutrients.getFat().getValue(),
+        return String.format(Locale.US, "%d;%s;%s;%s;%.1f;%.1f;%.1f;%.1f;%.1f;\n",
+                fdcId, getGtinUpc(), name, getIngredients(), currentLabelNutrients.getFat().getValue(),
                 currentLabelNutrients.getCarbohydrates().getValue(),
-                currentLabelNutrients.getFiber().getValue(),currentLabelNutrients.getProtein().getValue(),
+                currentLabelNutrients.getFiber().getValue(), currentLabelNutrients.getProtein().getValue(),
                 currentLabelNutrients.getCalories().getValue());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FoodReport that = (FoodReport) o;
+        return fdcId == that.fdcId && Objects.equals(gtinUpc, that.gtinUpc) && Objects.equals(name, that.name) && Objects.equals(ingredients, that.ingredients) && Objects.equals(labelNutrients, that.labelNutrients);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(fdcId, gtinUpc, name, ingredients, labelNutrients);
     }
 }

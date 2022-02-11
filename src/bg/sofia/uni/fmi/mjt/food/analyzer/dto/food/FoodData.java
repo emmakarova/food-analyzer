@@ -11,6 +11,6 @@ public class FoodData {
 
     @Override
     public String toString() {
-        return String.format("\n\tDescription: %s\n\tFdcId: %d\n",description,fdcId);
+        return String.format("\n\tDescription: %s\n\tFdcId: %d\n", description, fdcId);
     }
 }

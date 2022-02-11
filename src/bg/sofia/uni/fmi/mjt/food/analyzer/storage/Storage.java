@@ -4,7 +4,6 @@ import bg.sofia.uni.fmi.mjt.food.analyzer.dto.food.FoodReport;
 import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.FoodDataStorageException;
 
 public interface Storage {
-    // TODO: add params
     void load();
 
     void add(FoodReport foodReport);

@@ -9,10 +9,6 @@ public class CommandFactory {
 
         String[] arguments = clientInput.split(" ");
 
-        for(String s : arguments) {
-            System.out.print(s + "*");
-        }
-
         return new ArrayList<>(List.of(arguments));
 
     }
@@ -20,6 +16,6 @@ public class CommandFactory {
     public static Command newCommand(String clientInput) {
         List<String> words = CommandFactory.splitClientInput(clientInput);
 
-        return new Command(words.get(0),words.subList(1,words.size()));
+        return new Command(words.get(0), words.subList(1, words.size()));
     }
 }

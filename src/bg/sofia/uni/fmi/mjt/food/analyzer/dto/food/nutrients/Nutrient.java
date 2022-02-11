@@ -13,6 +13,6 @@ public class Nutrient {
 
     @Override
     public String toString() {
-        return String.format("%.1f g",value);
+        return String.format("%.1f g", value);
     }
 }

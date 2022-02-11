@@ -15,7 +15,6 @@ public class FoodAnalyzerClient {
     private static ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
 
     public void start() {
-
         try (SocketChannel socketChannel = SocketChannel.open();
              Scanner scanner = new Scanner(System.in)) {
 
@@ -25,7 +24,7 @@ public class FoodAnalyzerClient {
 
             while (true) {
                 System.out.print("> ");
-                String message = scanner.nextLine(); // read a line from the console
+                String message = scanner.nextLine();
 
                 if (message.equals("quit")) {
                     System.out.println("Disconnecting from the server and exiting...");
@@ -34,21 +33,18 @@ public class FoodAnalyzerClient {
 
                 System.out.println("Waiting for server to respond...");
 
-                buffer.clear(); // switch to writing mode
-                buffer.put(message.getBytes()); // buffer fill
-                buffer.flip(); // switch to reading mode
-                socketChannel.write(buffer); // buffer drain
+                buffer.clear();
+                buffer.put(message.getBytes());
+                buffer.flip();
+                socketChannel.write(buffer);
 
-                buffer.clear(); // switch to writing mode
-                socketChannel.read(buffer); // buffer fill
-                buffer.flip(); // switch to reading mode
+                buffer.clear();
+                socketChannel.read(buffer);
+                buffer.flip();
 
                 byte[] byteArray = new byte[buffer.remaining()];
                 buffer.get(byteArray);
-                String reply = new String(byteArray, StandardCharsets.UTF_8); // buffer drain
-
-                // if buffer is a non-direct one, is has a wrapped array and we can get it
-                //String reply = new String(buffer.array(), 0, buffer.position(), "UTF-8"); // buffer drain
+                String reply = new String(byteArray, StandardCharsets.UTF_8);
 
                 System.out.println(reply);
             }

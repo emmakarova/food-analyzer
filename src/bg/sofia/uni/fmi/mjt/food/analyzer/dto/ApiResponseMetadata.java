@@ -23,9 +23,6 @@ public class ApiResponseMetadata {
 
     @Override
     public String toString() {
-        return "ApiResponseMetadata{" +
-                "totalHits=" + totalHits +
-                ", foods=" + foods +
-                '}';
+        return String.format("Total hits: %d\nFood information: %s", totalHits, foods);
     }
 }
