@@ -8,6 +8,8 @@ import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.InvalidArgumentsException;
 import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.InvalidNumberOfArgumentsException;
 import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.NotMatchingArgumentsFormatException;
 import bg.sofia.uni.fmi.mjt.food.analyzer.fdc.FoodDataCentralClient;
+import bg.sofia.uni.fmi.mjt.food.analyzer.logger.FoodAnalyzerLogger;
+import bg.sofia.uni.fmi.mjt.food.analyzer.logger.Logger;
 import bg.sofia.uni.fmi.mjt.food.analyzer.storage.FoodDataStorage;
 import bg.sofia.uni.fmi.mjt.food.analyzer.storage.Storage;
 
@@ -15,6 +17,8 @@ import java.io.IOException;
 import java.net.http.HttpClient;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 public class CommandExecutor {
@@ -31,12 +35,14 @@ public class CommandExecutor {
 
     private FoodDataCentralClient fdcClient;
     private Storage foodDataStorage;
+    private Logger foodAnalyzerLogger;
 
     public CommandExecutor() {
         foodDataStorage = new FoodDataStorage();
+        foodAnalyzerLogger = new FoodAnalyzerLogger();
     }
 
-    private String getFoodByName(List<String> foodName) {
+    private String getFoodByName(List<String> foodName) throws FoodDataCentralClientException {
         StringBuilder s = new StringBuilder();
         s.append("query=");
         for(String str : foodName) {
@@ -50,12 +56,9 @@ public class CommandExecutor {
         fdcClient = new FoodDataCentralClient(HttpClient.newHttpClient());
 
         List<FoodData> foodInfo = null;
-        try {
-            foodInfo = fdcClient.getFoodInfo(s.toString());
-        } catch (FoodDataCentralClientException e) {
-            return e.getMessage();
-//            return "Problem with the API occurred, check your connection and try again later.\n";
-        }
+
+        foodInfo = fdcClient.getFoodInfo(s.toString());
+
 
         StringBuilder result = new StringBuilder();
         for(FoodData f : foodInfo) {
@@ -65,7 +68,7 @@ public class CommandExecutor {
         return result.toString();
     }
 
-    private String getFoodReport(List<String> arguments) throws InvalidNumberOfArgumentsException {
+    private String getFoodReport(List<String> arguments) throws InvalidNumberOfArgumentsException, FoodDataCentralClientException {
         int numberOfArguments = arguments.size();
         if(numberOfArguments > 1) {
             throw new InvalidNumberOfArgumentsException("Wrong number of arguments: expected 1 but given " + numberOfArguments);
@@ -82,13 +85,9 @@ public class CommandExecutor {
 
         fdcClient = new FoodDataCentralClient(HttpClient.newHttpClient());
 
-        try {
-            fr = fdcClient.getFoodReport(fdcId);
-        } catch (FoodDataCentralClientException e) {
-//            return "Problem with the API occurred, check your connection and try again later.\n";
-            // throw exception
-            return e.getMessage();
-        }
+
+        fr = fdcClient.getFoodReport(fdcId);
+
 
         foodDataStorage.add(fr);
 
@@ -96,9 +95,10 @@ public class CommandExecutor {
 
     }
 
-    private void validateBarcodeArguments(List<String> arguments) throws NotMatchingArgumentsFormatException {
+    private void validateBarcodeArguments(List<String> arguments) throws InvalidArgumentsException {
         if(arguments.size() == 0) {
-            throw new NotMatchingArgumentsFormatException("Expected at least one argument, type 'help' for more information.");
+//            foodAnalyzerLogger.log(LocalDateTime.now(),"Only one argument given in get-food-by-barcode command",Arrays.toString());
+            throw new InvalidNumberOfArgumentsException("Expected at least one argument, type 'help' for more information.");
         }
 
         int startIndex = 0;
@@ -123,13 +123,14 @@ public class CommandExecutor {
             }
         }
 
+//        String bPath = "C:\\Users\\emma_\\OneDrive\\Documents\\MJT\\food-analyzer\\src\\bg\\sofia\\uni\\fmi\\mjt\\food\\analyzer\\resources\\barcode.gif";
+
+
         // img case
 
-
-        // if code => getInfo
         // if img => generate code from img => getInfo
-        // if both => take code => getInfo
-        return "barcode";
+
+        return "barcode by image :(";
     }
 
     private String getHelp() {
@@ -143,19 +144,22 @@ public class CommandExecutor {
             }
         }
         catch (IOException e) {
-            System.out.println("Maybe throw exception");
+            // change?
+            throw new IllegalStateException();
+//            foodAnalyzerLogger.log(LocalDateTime.now(),
+//                    "Problem in loading the help information", Arrays.toString(e.getStackTrace()));
         }
 
         return helpInfo.toString();
     }
 
-    public String execute(Command command) throws InvalidArgumentsException, FoodDataStorageException {
+    public String execute(Command command) throws InvalidArgumentsException, FoodDataStorageException, FoodDataCentralClientException {
         return switch (command.cmd()) {
             case GET_FOOD -> getFoodByName(command.arguments());
             case GET_FOOD_REPORT -> getFoodReport(command.arguments());
             case GET_FOOD_BY_BARCODE -> getFoodByBarcode(command.arguments());
             case HELP -> getHelp();
-            default -> UNKNOWN_COMMAND;
+            default -> UNKNOWN_COMMAND;//maybe exception
         };
     }
 

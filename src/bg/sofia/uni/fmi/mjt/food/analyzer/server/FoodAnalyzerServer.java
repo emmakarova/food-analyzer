@@ -2,9 +2,12 @@ package bg.sofia.uni.fmi.mjt.food.analyzer.server;
 
 import bg.sofia.uni.fmi.mjt.food.analyzer.commands.CommandExecutor;
 import bg.sofia.uni.fmi.mjt.food.analyzer.commands.CommandFactory;
+import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.FoodDataCentralClientException;
 import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.FoodDataStorageException;
 import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.InvalidArgumentsException;
 import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.InvalidNumberOfArgumentsException;
+import bg.sofia.uni.fmi.mjt.food.analyzer.logger.FoodAnalyzerLogger;
+import bg.sofia.uni.fmi.mjt.food.analyzer.logger.Logger;
 import bg.sofia.uni.fmi.mjt.food.analyzer.storage.Storage;
 
 import java.io.IOException;
@@ -15,6 +18,8 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -26,7 +31,7 @@ public class FoodAnalyzerServer {
     private static ByteBuffer buffer = ByteBuffer.allocate(BUFFER_SIZE);
     private static CommandExecutor cmdExecutor = new CommandExecutor();
 
-    private Storage storage;
+    private Logger foodAnalyzerLogger = new FoodAnalyzerLogger();
 
 
     //add constructor
@@ -69,12 +74,13 @@ public class FoodAnalyzerServer {
                         String res = null;
                         try {
                             res = cmdExecutor.execute(CommandFactory.newCommand(clientInput));
-                        } catch (InvalidArgumentsException | FoodDataStorageException e) {
+                        } catch (InvalidArgumentsException | FoodDataStorageException | FoodDataCentralClientException e) {
+                            foodAnalyzerLogger.log(LocalDateTime.now(),e.getMessage(),Arrays.toString(e.getStackTrace()));
                             writeClientOutput(sc,e.getMessage());
                         }
                         // res will be the final result from either:
                         // -> storage
-                        // -> api requestx
+                        // -> api request
                         // -> help/unknown command
 
                         System.out.println(res);
