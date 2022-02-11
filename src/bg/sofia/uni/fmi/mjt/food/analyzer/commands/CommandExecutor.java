@@ -17,8 +17,6 @@ import java.io.IOException;
 import java.net.http.HttpClient;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 
 public class CommandExecutor {
@@ -61,8 +59,9 @@ public class CommandExecutor {
 
 
         StringBuilder result = new StringBuilder();
+        int foodCounter = 1;
         for(FoodData f : foodInfo) {
-            result.append(f.toString()).append(System.lineSeparator());
+            result.append("Food #").append(foodCounter++).append(f.toString());
         }
 
         return result.toString();
@@ -97,7 +96,6 @@ public class CommandExecutor {
 
     private void validateBarcodeArguments(List<String> arguments) throws InvalidArgumentsException {
         if(arguments.size() == 0) {
-//            foodAnalyzerLogger.log(LocalDateTime.now(),"Only one argument given in get-food-by-barcode command",Arrays.toString());
             throw new InvalidNumberOfArgumentsException("Expected at least one argument, type 'help' for more information.");
         }
 
@@ -146,8 +144,6 @@ public class CommandExecutor {
         catch (IOException e) {
             // change?
             throw new IllegalStateException();
-//            foodAnalyzerLogger.log(LocalDateTime.now(),
-//                    "Problem in loading the help information", Arrays.toString(e.getStackTrace()));
         }
 
         return helpInfo.toString();
@@ -159,7 +155,7 @@ public class CommandExecutor {
             case GET_FOOD_REPORT -> getFoodReport(command.arguments());
             case GET_FOOD_BY_BARCODE -> getFoodByBarcode(command.arguments());
             case HELP -> getHelp();
-            default -> UNKNOWN_COMMAND;//maybe exception
+            default -> throw new InvalidArgumentsException(UNKNOWN_COMMAND);
         };
     }
 

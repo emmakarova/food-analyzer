@@ -7,6 +7,15 @@ public class LabelNutrients {
     private Nutrient protein;
     private Nutrient calories;
 
+    public LabelNutrients(Nutrient noInformation) {
+        this.fat = noInformation;
+        this.carbohydrates = noInformation;
+        this.fiber = noInformation;
+        this.protein = noInformation;
+        this.calories = noInformation;
+
+    }
+
     public LabelNutrients(Nutrient fat, Nutrient carbohydrates, Nutrient fiber, Nutrient protein, Nutrient calories) {
         this.fat = fat;
         this.carbohydrates = carbohydrates;
@@ -17,29 +26,29 @@ public class LabelNutrients {
 
     public Nutrient getFat() {
         // some products don't have nutrients
-        return fat == null ? new Nutrient(0.0) : fat;
+        return fat;
     }
 
     public Nutrient getCarbohydrates() {
-        return carbohydrates == null ? new Nutrient(0.0) : carbohydrates;
+        return carbohydrates;
     }
 
     public Nutrient getFiber() {
-        return fiber == null ? new Nutrient(0.0) : fiber;
+        return fiber;
     }
 
     public Nutrient getProtein() {
-        return protein == null ? new Nutrient(0.0) : protein;
+        return protein;
     }
 
     public Nutrient getCalories() {
-        return calories == null ? new Nutrient(0.0) : calories;
+        return calories;
     }
 
     @Override
     public String toString() {
         return String.format("\t\t- fat: %s\n\t\t- carbohydrates: %s\n\t\t- fiber: %s\n\t\t- protein: %s\n\t\t- calories: %s\n",
-                                getFat(),getCarbohydrates(),getFiber(),getProtein(),getCalories());
+                                fat,carbohydrates,fiber,protein,calories);
     }
 }
 

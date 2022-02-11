@@ -13,7 +13,7 @@ public class FoodReport {
     private String name;
     private String ingredients;
     private LabelNutrients labelNutrients;
-//fdcId;name;ingredients;fat;carbohydrates;fiber;protein;calories;
+
     private static final int FDCID = 1;
     private static final int GTINUPC = 2;
     private static final int NAME = 3;
@@ -38,7 +38,15 @@ public class FoodReport {
     }
 
     public String getGtinUpc() {
-        return gtinUpc;
+        return gtinUpc == null ? "No gtinUpc" : gtinUpc;
+    }
+
+    public String getIngredients() {
+        return ingredients == null ? "No information" : ingredients;
+    }
+
+    public LabelNutrients getLabelNutrients() {
+        return labelNutrients == null ? new LabelNutrients(new Nutrient(0.0)) : labelNutrients;
     }
 
     public static FoodReport of(String line) {
@@ -62,13 +70,17 @@ public class FoodReport {
 
     @Override
     public String toString() {
-        return String.format("Food report:\n\tFdcId: %d\n\tGtinUpc: %s\n\tName: %s\n\tIngredients: %s\n\tNutrients:\n%s",fdcId,gtinUpc,name,ingredients,labelNutrients);
+        return String.format("Food report:\n\tFdcId: %d\n\tGtinUpc: %s\n\tName: %s\n\tIngredients: %s\n\tNutrients:\n%s",fdcId,getGtinUpc(),name,getIngredients(),getLabelNutrients());
     }
 
     public String toCSV() {
+        System.out.println(toString());
+        LabelNutrients currentLabelNutrients = getLabelNutrients();
+
         return String.format(Locale.US,"%d;%s;%s;%s;%.1f;%.1f;%.1f;%.1f;%.1f;\n",
-                fdcId,getGtinUpc(),name,ingredients,labelNutrients.getFat().getValue(),labelNutrients.getCarbohydrates().getValue(),
-                labelNutrients.getFiber().getValue(),labelNutrients.getProtein().getValue(),
-                labelNutrients.getCalories().getValue());
+                fdcId,getGtinUpc(),name,getIngredients(),currentLabelNutrients.getFat().getValue(),
+                currentLabelNutrients.getCarbohydrates().getValue(),
+                currentLabelNutrients.getFiber().getValue(),currentLabelNutrients.getProtein().getValue(),
+                currentLabelNutrients.getCalories().getValue());
     }
 }

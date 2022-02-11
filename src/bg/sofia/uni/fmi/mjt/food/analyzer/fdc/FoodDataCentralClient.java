@@ -22,6 +22,8 @@ public class FoodDataCentralClient {
     private static final String DEFAULT_API_KEY = "aXw5cNdqOAYEPzfme2YKKCxQCPQu4qgcGTUn0bBZ";
     private static final String API_SCHEME = "https";
     private static final String API_HOST = "api.nal.usda.gov";
+    private static final String API_PARAMETERS = "%s&requireAllWords=true&api_key=%s&pageSize=%d&pageNumber=%d";
+    private static final int DEFAULT_PAGE_SIZE = 10;
 
     private static final String PATH_TO_RESOURCE_GET_FOOD = "/fdc/v1/foods/search";
     private static final String PATH_TO_RESOURCE_GET_FOOD_REPORT = "/fdc/v1/food";
@@ -30,9 +32,11 @@ public class FoodDataCentralClient {
 
     private final HttpClient foodDataCentralClient;
     private final String apiKey;
+    private int currentPage;
 
     public FoodDataCentralClient(HttpClient foodDataCentralClient) {
         this(foodDataCentralClient,DEFAULT_API_KEY);
+        this.currentPage = 0;
     }
 
     public FoodDataCentralClient(HttpClient foodDataCentralClient, String apiKey) {
@@ -46,13 +50,9 @@ public class FoodDataCentralClient {
         List<FoodData> result = new ArrayList<>();
 
         try {
-//            System.out.println(API_SCHEME+API_HOST+pathToResourceInHost+queryParameters+"&requireAllWords=true&api_key=" + API_KEY);
-            URI uri = new URI(API_SCHEME,API_HOST,PATH_TO_RESOURCE_GET_FOOD,queryParameters + "&requireAllWords=true&api_key=" + apiKey + "&pageSize=10",null);
-            System.out.println(uri.toString());
+            URI uri = new URI(API_SCHEME,API_HOST,PATH_TO_RESOURCE_GET_FOOD,String.format(API_PARAMETERS,queryParameters,apiKey,DEFAULT_PAGE_SIZE,currentPage),null);
             HttpRequest request = HttpRequest.newBuilder().uri(uri).build();
-            System.out.println("HERE");
             response = foodDataCentralClient.send(request, HttpResponse.BodyHandlers.ofString());
-            System.out.println("HERE2");
         }
         catch (IOException | URISyntaxException | InterruptedException e) {
             throw new FoodDataCentralClientException("An error when sending the request occurred");
@@ -60,7 +60,6 @@ public class FoodDataCentralClient {
         int responseStatusCode = response.statusCode();
 
         if(responseStatusCode == HttpURLConnection.HTTP_OK) {
-//            System.out.println(response.body());
             ApiResponseMetadata r = GSON.fromJson(response.body(),ApiResponseMetadata.class);
             return r.getFoods();
         }
@@ -91,7 +90,7 @@ public class FoodDataCentralClient {
             response = foodDataCentralClient.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (URISyntaxException | IOException | InterruptedException e) {
             // connection error
-            throw new FoodDataCentralClientException("An error when sending the request occurred");
+            throw new FoodDataCentralClientException("Error when sending the request, check your connection and try again.");
         }
 
         int responseStatusCode = response.statusCode();
