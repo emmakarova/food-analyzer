@@ -21,7 +21,7 @@ public class FoodAnalyzerLogger implements Logger {
         this.currentSizeOfLogFile = DEFAULT_MAX_SIZE_OF_LOG_FILE;
         this.logDirectory = logDirectory;
         int dirSize = 0;
-        // ?
+
         if (Files.exists(Path.of(logDirectory))) {
             dirSize = new File(logDirectory).list().length;
         }

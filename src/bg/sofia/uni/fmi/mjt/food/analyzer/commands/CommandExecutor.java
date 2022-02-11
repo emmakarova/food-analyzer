@@ -1,5 +1,6 @@
 package bg.sofia.uni.fmi.mjt.food.analyzer.commands;
 
+import bg.sofia.uni.fmi.mjt.food.analyzer.barcode.BarcodeDecoder;
 import bg.sofia.uni.fmi.mjt.food.analyzer.dto.food.FoodData;
 import bg.sofia.uni.fmi.mjt.food.analyzer.dto.food.FoodReport;
 import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.FoodDataCentralClientException;
@@ -27,7 +28,6 @@ public class CommandExecutor {
 
     private static final String HELP_FILE_PATH = "src/bg/sofia/uni/fmi/mjt/food/analyzer/resources/help.txt";
     private static final String STORAGE_FILE = "src/bg/sofia/uni/fmi/mjt/food/analyzer/resources/storage.csv";
-    private static final String UNKNOWN_COMMAND = "The command is not supported.";
     private static final String CODE_ARGUMENT_REGEX = "--code=[0-9]+";
     private static final String IMAGE_ARGUMENT_REGEX = "--img=";
 
@@ -132,6 +132,11 @@ public class CommandExecutor {
         return fr.toString();
     }
 
+    private String decodeBarcodeFromImage(String imagePath) throws IOException, InterruptedException {
+        BarcodeDecoder decoder = new BarcodeDecoder(imagePath);
+        return decoder.decode();
+    }
+
     private String getFoodByBarcode(List<String> arguments) throws InvalidArgumentsException, FoodDataStorageException {
         validateBarcodeArguments(arguments);
 
@@ -143,9 +148,14 @@ public class CommandExecutor {
             }
         }
 
-        // if img => generate code from img => getInfo
+        String imagePath = arguments.get(0).substring(7);
 
-        return "barcode by image :(";
+        try {
+            return decodeBarcodeFromImage(imagePath);
+        }
+        catch (IOException | InterruptedException e) {
+            throw new FoodDataStorageException("Error when decoding the barcode image.");
+        }
     }
 
     private String getHelp() {
@@ -171,7 +181,7 @@ public class CommandExecutor {
             case GET_FOOD_REPORT -> getFoodReport(command.arguments());
             case GET_FOOD_BY_BARCODE -> getFoodByBarcode(command.arguments());
             case HELP -> getHelp();
-            default -> throw new InvalidArgumentsException(UNKNOWN_COMMAND);
+            default -> throw new InvalidArgumentsException("The command is not supported, type 'help' for more information.");
         };
     }
 }
