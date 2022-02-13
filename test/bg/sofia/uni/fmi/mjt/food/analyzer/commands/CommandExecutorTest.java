@@ -7,11 +7,9 @@ import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.InvalidArgumentsException;
 import bg.sofia.uni.fmi.mjt.food.analyzer.fdc.FoodDataCentralClient;
 import bg.sofia.uni.fmi.mjt.food.analyzer.storage.Storage;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
@@ -19,7 +17,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class CommandExecutorTest {
@@ -27,16 +24,18 @@ public class CommandExecutorTest {
     private static final String HElP_INFO = """
             Commands supported:
                 > get-food <food_name>
-                    - returns information about the given food by food name.
+                    - returns information about the given food by food name (returns the first page from the result).
+                > get-food <page-number> <food-name>
+                    - return information about the given food by name (returns the given page-number from the result).
                 > get-food-report <food_fdcId>
-                    - returns the name of the product, its calories,protein, fats,carbohydrates and fibers.
+                    - returns the name of the product, gtinUpc, calories, protein, fats, carbohydrates and fibers.
                 > get-food-by-barcode --code=<gtinUpc_code>|--img=<barcode_image_file>
-                    - returns information about the product searched by barcode or barcode image.
+                    - returns information about the product searched by barcode or barcode image (if present in the storage of the server).
                 > help
                     - displays information about the supported commands.
                 > quit
                     - exits the application.
-                    """;
+                    """.replace("\n","\r\n");
 
     private static List<FoodData> foodInfo;
 
@@ -62,22 +61,10 @@ public class CommandExecutorTest {
     }
 
     @Test
-    @Disabled // fix line separators
     public void testHelpCommand() throws FoodDataCentralClientException, FoodDataStorageException, InvalidArgumentsException {
         CommandExecutor cmdExecutor = new CommandExecutor();
         Command cmd = new Command("help", new ArrayList<>());
 
         assertEquals(HElP_INFO, cmdExecutor.execute(cmd), "Executor should return the help info.");
-    }
-
-    @Test
-    @Disabled // fix mocking
-    public void testGetFoodCommand() throws FoodDataCentralClientException, FoodDataStorageException, InvalidArgumentsException {
-        when(fdcClientMock.getFoodInfo(Mockito.any(Integer.class), Mockito.any(String.class))).thenReturn(foodInfo);
-
-        CommandExecutor cmdExecutor = new CommandExecutor(fdcClientMock, foodDataStorageMock);
-        Command cmd = new Command("get-food", List.of("oreo"));
-
-        cmdExecutor.execute(cmd);
     }
 }
