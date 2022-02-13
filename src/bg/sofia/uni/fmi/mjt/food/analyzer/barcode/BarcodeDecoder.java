@@ -1,18 +1,17 @@
 package bg.sofia.uni.fmi.mjt.food.analyzer.barcode;
 
+import com.google.zxing.BinaryBitmap;
+import com.google.zxing.FormatException;
+import com.google.zxing.NotFoundException;
+import com.google.zxing.RGBLuminanceSource;
+import com.google.zxing.Result;
+import com.google.zxing.common.HybridBinarizer;
+import com.google.zxing.oned.UPCAReader;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
-import java.math.BigInteger;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Random;
 
 public class BarcodeDecoder {
     private String imagePath;
@@ -21,50 +20,22 @@ public class BarcodeDecoder {
         this.imagePath = imagePath;
     }
 
-    public String decode() throws IOException, InterruptedException {
-        HttpClient client = HttpClient.newBuilder().build();
+    public String decode() throws IOException, NotFoundException, FormatException {
+        File file = new File(imagePath);
+        BinaryBitmap bitmap;
+        Result result;
 
-        Path bFile = Path.of(imagePath);
-        Map<Object, Object> data = new LinkedHashMap<>();
-        data.put("file", bFile);
+        BufferedImage image = ImageIO.read(file);
 
-        String boundary = new BigInteger(256, new Random()).toString();
-        var request = HttpRequest.newBuilder()
-                .header("Content-type", "multipart/form-data; boundary=" + boundary)
-                .POST(ofMimeMultipartData(data, boundary))
-                .uri(URI.create("https://zxing.org/w/decode"))
-                .build();
+        int[] pixels = image.getRGB(0, 0, image.getWidth(), image.getHeight(), null, 0, image.getWidth());
+        RGBLuminanceSource source = new RGBLuminanceSource(image.getWidth(), image.getHeight(), pixels);
 
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        bitmap = new BinaryBitmap(new HybridBinarizer(source));
 
-        String b = response.body();
+        UPCAReader reader = new UPCAReader();
 
-        return "barcode";
-    }
+        result = reader.decode(bitmap);
 
-    public HttpRequest.BodyPublisher ofMimeMultipartData(Map<Object, Object> data,
-                                                         String boundary) throws IOException {
-        var byteArrays = new ArrayList<byte[]>();
-        byte[] separator = ("--" + boundary + System.lineSeparator() + "Content-Disposition: form-data; name=")
-                .getBytes(StandardCharsets.UTF_8);
-        for (Map.Entry<Object, Object> entry : data.entrySet()) {
-            byteArrays.add(separator);
-
-            if (entry.getValue() instanceof Path) {
-                var path = (Path) entry.getValue();
-                String mimeType = Files.probeContentType(path);
-                byteArrays.add(("\"" + entry.getKey() + "\"; file=\"" + path.getFileName()
-                        + "\"" + System.lineSeparator() + "Content-Type: " + mimeType + System.lineSeparator() +
-                        System.lineSeparator()).getBytes(StandardCharsets.UTF_8));
-                byteArrays.add(Files.readAllBytes(path));
-                byteArrays.add(System.lineSeparator().getBytes(StandardCharsets.UTF_8));
-            } else {
-                byteArrays.add(("\"" + entry.getKey() + "\"" + System.lineSeparator() + System.lineSeparator() +
-                        entry.getValue() + System.lineSeparator())
-                        .getBytes(StandardCharsets.UTF_8));
-            }
-        }
-        byteArrays.add(("--" + boundary + "--").getBytes(StandardCharsets.UTF_8));
-        return HttpRequest.BodyPublishers.ofByteArrays(byteArrays);
+        return result.getText();
     }
 }

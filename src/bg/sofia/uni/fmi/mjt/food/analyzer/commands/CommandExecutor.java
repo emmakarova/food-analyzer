@@ -1,6 +1,5 @@
 package bg.sofia.uni.fmi.mjt.food.analyzer.commands;
 
-import bg.sofia.uni.fmi.mjt.food.analyzer.barcode.BarcodeDecoder;
 import bg.sofia.uni.fmi.mjt.food.analyzer.dto.food.FoodData;
 import bg.sofia.uni.fmi.mjt.food.analyzer.dto.food.FoodReport;
 import bg.sofia.uni.fmi.mjt.food.analyzer.exceptions.FoodDataCentralClientException;
@@ -30,7 +29,9 @@ public class CommandExecutor {
     private static final String STORAGE_FILE = "src/bg/sofia/uni/fmi/mjt/food/analyzer/resources/storage.csv";
     private static final String CODE_ARGUMENT_REGEX = "--code=[0-9]+";
     private static final String IMAGE_ARGUMENT_REGEX = "--img=";
-
+    private static final String CODE_ARGUMENT_PREFIX = "--code";
+    private static final int BARCODE_CODE_START_INDEX = 7;
+    private static final int BARCODE_IMG_START_INDEX = 6;
 
     private FoodDataCentralClient fdcClient;
     private Storage foodDataStorage;
@@ -132,30 +133,19 @@ public class CommandExecutor {
         return fr.toString();
     }
 
-    private String decodeBarcodeFromImage(String imagePath) throws IOException, InterruptedException {
-        BarcodeDecoder decoder = new BarcodeDecoder(imagePath);
-        return decoder.decode();
-    }
-
     private String getFoodByBarcode(List<String> arguments) throws InvalidArgumentsException, FoodDataStorageException {
         validateBarcodeArguments(arguments);
+        foodDataStorage.load();
 
         for (String a : arguments) {
-            if (a.startsWith("--code")) {
-                String gtinUpc = a.substring(7);
+            if (a.startsWith(CODE_ARGUMENT_PREFIX)) {
+                String gtinUpc = a.substring(BARCODE_CODE_START_INDEX);
 
                 return foodDataStorage.getFoodReportByBarcode(gtinUpc).toString();
             }
         }
 
-        String imagePath = arguments.get(0).substring(7);
-
-        try {
-            return decodeBarcodeFromImage(imagePath);
-        }
-        catch (IOException | InterruptedException e) {
-            throw new FoodDataStorageException("Error when decoding the barcode image.");
-        }
+        throw new InvalidArgumentsException("Expected --code= or --img argument.");
     }
 
     private String getHelp() {
